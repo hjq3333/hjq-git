@@ -8,5 +8,22 @@
     <artifactId>hjq-git</artifactId>
     <version>1.0-SNAPSHOT</version>
 
+    <properties>
+        <java.version>1.8</java.version>
+        <maven.providedr.source>${java.version}</maven.providedr.source>
+        <maven.providedr.target>${java.version}</maven.providedr.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <flink.version>1.17.1</flink.version>
+        <scala.version>2.12</scala.version>
+        <hadoop.version>3.1.3</hadoop.version>
+        <flink-cdc.vesion>2.4.0</flink-cdc.vesion>
+        <fastjson.version>1.2.83</fastjson.version>
+        <hbase.version>2.4.11</hbase.version>
+    </properties>
+
+
+
+
+
 
 </project>
