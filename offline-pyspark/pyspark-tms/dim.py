@@ -30,8 +30,8 @@ def create_hdfs_dir(path):
 
 # 新增：修复Hive表分区的函数（关键）
 def repair_hive_table(table_name):
-    spark.sql(f"MSCK REPAIR TABLE tms.{table_name}")
-    print(f"修复分区完成：tms.{table_name}")
+    spark.sql(f"MSCK REPAIR TABLE tms_spark_dim.{table_name}")
+    print(f"修复分区完成：tms_spark_dim.{table_name}")
 
 # 新增：打印数据量的函数（验证数据是否存在）
 def print_data_count(df, table_name):
@@ -42,9 +42,9 @@ def print_data_count(df, table_name):
 
 # ====================== 1. 小区维度表 dim_complex_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_complex_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_complex_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_complex_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_complex_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_complex_full (
     id BIGINT COMMENT '小区ID',
     complex_name STRING COMMENT '小区名称',
     courier_emp_ids ARRAY<STRING> COMMENT '负责快递员IDS',
@@ -62,19 +62,19 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 complex_info = spark.table("tms01.ods_base_complex").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "complex_name", "province_id", "city_id", "district_id", "district_name")
 
 dic_prov = spark.table("tms01.ods_base_region_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "province_id").withColumnRenamed("name", "province_name")
 
 dic_city = spark.table("tms01.ods_base_region_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "city_id").withColumnRenamed("name", "city_name")
 
 complex_courier = spark.table("tms01.ods_express_courier_complex").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).groupBy("complex_id").agg(
     F.collect_set(F.col("courier_emp_id").cast(T.StringType())).alias("courier_emp_ids")
 )
@@ -93,7 +93,7 @@ joined = complex_info \
 print_data_count(joined, "dim_complex_full")
 
 # 写入数据
-joined.withColumn("dt", F.lit("20250712")) \
+joined.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_complex_full")
@@ -104,9 +104,9 @@ repair_hive_table("dim_complex_full")
 
 # ====================== 2. 机构维度表 dim_organ_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_organ_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_organ_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_organ_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_organ_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_organ_full (
     id BIGINT COMMENT '机构ID',
     org_name STRING COMMENT '机构名称',
     org_level BIGINT COMMENT '机构等级（1为转运中心，2为转运站）',
@@ -123,15 +123,15 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 organ_info = spark.table("tms01.ods_base_organ").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "org_name", "org_level", "region_id", "org_parent_id").alias("o")
 
 region_info = spark.table("tms01.ods_base_region_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name", "dict_code").withColumnRenamed("name", "region_name").withColumnRenamed("dict_code", "region_code").alias("r")
 
 org_parent = spark.table("tms01.ods_base_organ").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "org_name").withColumnRenamed("id", "org_parent_id").withColumnRenamed("org_name", "org_parent_name").alias("op")
 
 joined = organ_info \
@@ -146,7 +146,7 @@ joined = organ_info \
 
 print_data_count(joined, "dim_organ_full")
 
-joined.withColumn("dt", F.lit("20250712")) \
+joined.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_organ_full")
@@ -156,9 +156,9 @@ repair_hive_table("dim_organ_full")
 
 # ====================== 3. 地区维度表 dim_region_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_region_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_region_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_region_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_region_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_region_full (
     id BIGINT COMMENT '地区ID',
     parent_id BIGINT COMMENT '上级地区ID',
     name STRING COMMENT '地区名称',
@@ -172,12 +172,12 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 region_df = spark.table("tms01.ods_base_region_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "parent_id", "name", "dict_code", "short_name")
 
 print_data_count(region_df, "dim_region_full")
 
-region_df.withColumn("dt", F.lit("20250712")) \
+region_df.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_region_full")
@@ -187,9 +187,9 @@ repair_hive_table("dim_region_full")
 
 # ====================== 4. 快递员维度表 dim_express_courier_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_express_courier_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_express_courier_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_express_courier_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_express_courier_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_express_courier_full (
     id BIGINT COMMENT '快递员ID',
     emp_id BIGINT COMMENT '员工ID',
     org_id BIGINT COMMENT '所属机构ID',
@@ -205,15 +205,15 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 courier_info = spark.table("tms01.ods_express_courier").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "emp_id", "org_id", "working_phone", "express_type").alias("c")
 
 org_info = spark.table("tms01.ods_base_organ").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "org_name").withColumnRenamed("id", "org_id").alias("o")
 
 dic_info = spark.table("tms01.ods_base_dic").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "express_type").withColumnRenamed("name", "express_type_name").alias("d")
 
 joined = courier_info \
@@ -227,7 +227,7 @@ joined = courier_info \
 
 print_data_count(joined, "dim_express_courier_full")
 
-joined.withColumn("dt", F.lit("20250712")) \
+joined.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_express_courier_full")
@@ -237,9 +237,9 @@ repair_hive_table("dim_express_courier_full")
 
 # ====================== 5. 班次维度表 dim_shift_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_shift_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_shift_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_shift_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_shift_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_shift_full (
     id BIGINT COMMENT '班次ID',
     line_id BIGINT COMMENT '线路ID',
     line_name STRING COMMENT '线路名称',
@@ -269,17 +269,17 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 shift_info = spark.table("tms01.ods_line_base_shift").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "line_id", "start_time", "driver1_emp_id", "driver2_emp_id", "truck_id", "pair_shift_id").alias("s")
 
 line_info = spark.table("tms01.ods_line_base_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name", "line_no", "line_level", "org_id", "transport_line_type_id",
          "start_org_id", "start_org_name", "end_org_id", "end_org_name",
          "pair_line_id", "distance", "cost", "estimated_time").alias("l")
 
 dic_type = spark.table("tms01.ods_base_dic").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "transport_line_type_id").withColumnRenamed("name", "transport_line_type_name").alias("d")
 
 joined = shift_info \
@@ -295,7 +295,7 @@ joined = shift_info \
 
 print_data_count(joined, "dim_shift_full")
 
-joined.withColumn("dt", F.lit("20250712")) \
+joined.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_shift_full")
@@ -305,9 +305,9 @@ repair_hive_table("dim_shift_full")
 
 # ====================== 6. 司机维度表 dim_truck_driver_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_truck_driver_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_truck_driver_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_truck_driver_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_truck_driver_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_truck_driver_full (
     id BIGINT COMMENT '司机信息ID',
     emp_id BIGINT COMMENT '员工ID',
     org_id BIGINT COMMENT '所属机构ID',
@@ -327,16 +327,16 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 driver_info = spark.table("tms01.ods_truck_driver").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "emp_id", "org_id", "team_id", "license_type",
          "init_license_date", "expire_date", "license_no", "is_enabled").alias("d")
 
 org_info = spark.table("tms01.ods_base_organ").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "org_name").withColumnRenamed("id", "org_id").alias("o")
 
 team_info = spark.table("tms01.ods_truck_team").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "team_id").withColumnRenamed("name", "tream_name").alias("t")
 
 joined = driver_info \
@@ -350,7 +350,7 @@ joined = driver_info \
 
 print_data_count(joined, "dim_truck_driver_full")
 
-joined.withColumn("dt", F.lit("20250712")) \
+joined.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_truck_driver_full")
@@ -360,9 +360,9 @@ repair_hive_table("dim_truck_driver_full")
 
 # ====================== 7. 卡车维度表 dim_truck_full ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_truck_full")
-spark.sql("DROP TABLE IF EXISTS tms.dim_truck_full")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_truck_full")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_truck_full (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_truck_full (
     id BIGINT COMMENT '卡车ID',
     team_id BIGINT COMMENT '所属车队ID',
     team_name STRING COMMENT '所属车队名称',
@@ -401,31 +401,31 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 truck_info = spark.table("tms01.ods_truck_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "team_id", "truck_model_id", "device_gps_id",
          "engine_no", "license_registration_date", "license_last_check_date",
          "license_expire_date", "is_enabled", "truck_no").alias("t")
 
 team_info = spark.table("tms01.ods_truck_team").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name", "team_no", "org_id", "manager_emp_id").withColumnRenamed("id", "team_id").withColumnRenamed("name", "team_name").alias("tm")
 
 model_info = spark.table("tms01.ods_truck_model").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "model_name", "model_type", "model_no", "brand",
          "truck_weight", "load_weight", "total_weight", "eev",
          "boxcar_len", "boxcar_wd", "boxcar_hg", "max_speed", "oil_vol").alias("m")
 
 org_info = spark.table("tms01.ods_base_organ").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "org_name").withColumnRenamed("id", "org_id").alias("o")
 
 dic_type = spark.table("tms01.ods_base_dic").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "model_type").withColumnRenamed("name", "truck_model_type_name").alias("dt")
 
 dic_brand = spark.table("tms01.ods_base_dic").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "name").withColumnRenamed("id", "brand").withColumnRenamed("name", "truck_brand_name").alias("db")
 
 joined = truck_info \
@@ -447,7 +447,7 @@ joined = truck_info \
 
 print_data_count(joined, "dim_truck_full")
 
-joined.withColumn("dt", F.lit("20250712")) \
+joined.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_truck_full")
@@ -457,9 +457,9 @@ repair_hive_table("dim_truck_full")
 
 # ====================== 8. 用户拉链表 dim_user_zip ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_user_zip")
-spark.sql("DROP TABLE IF EXISTS tms.dim_user_zip")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_user_zip")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_user_zip (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_user_zip (
     id BIGINT COMMENT '用户地址信息ID',
     login_name STRING COMMENT '用户名称',
     nick_name STRING COMMENT '用户昵称',
@@ -480,7 +480,7 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 user_info = spark.table("tms01.ods_user_info").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    F.col("dt") == "20250713"
 ).select("id", "login_name", "nick_name", "passwd", "real_name",
          "phone_num", "email", "user_level", "birthday", "gender", "create_time")
 
@@ -502,7 +502,7 @@ user_df = user_info \
 
 print_data_count(user_df, "dim_user_zip")
 
-user_df.withColumn("dt", F.lit("20250712")) \
+user_df.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_user_zip")
@@ -512,9 +512,9 @@ repair_hive_table("dim_user_zip")
 
 # ====================== 9. 用户地址拉链表 dim_user_address_zip ======================
 create_hdfs_dir("/warehouse/tms_pyspark/dim/dim_user_address_zip")
-spark.sql("DROP TABLE IF EXISTS tms.dim_user_address_zip")
+spark.sql("DROP TABLE IF EXISTS  tms_spark_dim.dim_user_address_zip")
 spark.sql("""
-CREATE EXTERNAL TABLE tms.dim_user_address_zip (
+CREATE EXTERNAL TABLE  tms_spark_dim.dim_user_address_zip (
     id BIGINT COMMENT '地址ID',
     user_id BIGINT COMMENT '用户ID',
     phone STRING COMMENT '电话号', 
@@ -534,7 +534,7 @@ TBLPROPERTIES ('orc.compress' = 'snappy');
 """)
 
 addr_info = spark.table("tms01.ods_user_address").filter(
-    (F.col("dt") == "20250712") & (F.col("is_deleted") == "0")
+    (F.col("dt") == "20250713") & (F.col("is_deleted") == "0")
 ).select("id", "user_id", "phone", "province_id", "city_id",
          "district_id", "complex_id", "address", "is_default", "create_time")
 
@@ -549,7 +549,7 @@ addr_df = addr_info \
 
 print_data_count(addr_df, "dim_user_address_zip")
 
-addr_df.withColumn("dt", F.lit("20250712")) \
+addr_df.withColumn("dt", F.lit("20250713")) \
     .write.mode("overwrite") \
     .partitionBy("dt") \
     .orc("/warehouse/tms_pyspark/dim/dim_user_address_zip")
