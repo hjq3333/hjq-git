@@ -19,8 +19,7 @@ java_import(spark.sparkContext._gateway.jvm, "org.apache.hadoop.fs.Path")
 java_import(spark.sparkContext._gateway.jvm, "org.apache.hadoop.fs.FileSystem")
 fs = spark.sparkContext._jvm.FileSystem.get(spark.sparkContext._jsc.hadoopConfiguration())
 
-# 切换数据库
-spark.sql("USE wl")
+
 
 # 辅助函数定义
 def create_hdfs_dir(path):
