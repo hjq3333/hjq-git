@@ -52,7 +52,7 @@ def force_delete_hdfs_path(path):
 
 
 # 处理日期参数
-process_date = "20250101"  # 处理日期
+process_date = "20250104"  # 处理日期
 process_date_ymd = datetime.datetime.strptime(process_date, "%Y%m%d").strftime("%Y-%m-%d")
 
 # 计算7天前日期（用于周维度统计）
@@ -68,10 +68,10 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gd02.dws_product_sale_summary (
     product_name STRING COMMENT '商品名称',
     category_id INT COMMENT '分类ID',
     category_name STRING COMMENT '分类名称',
-    total_sales_amount DECIMAL(12,2) COMMENT '总销售额',
-    total_sales_num INT COMMENT '总销量',
+    total_sales_amount DOUBLE COMMENT '总销售额',
+    total_sales_num BIGINT COMMENT '总销量',
     total_order_num INT COMMENT '总订单数',
-    avg_price DECIMAL(10,2) COMMENT '平均客单价',
+    avg_price DOUBLE COMMENT '平均客单价',
     stat_date STRING COMMENT '统计日期'
 ) 
 PARTITIONED BY (stat_period STRING COMMENT '统计周期（day/week/month）')
@@ -96,10 +96,10 @@ daily_sale_summary = spark.table("gd02.dwd_product_sale_detail").alias("sale") \
     F.col("sale.category_name")
 ) \
     .agg(
-    F.sum("pay_amount").cast("decimal(12,2)").alias("total_sales_amount"),
+    F.sum("pay_amount").cast("DOUBLE").alias("total_sales_amount"),
     F.sum("pay_num").alias("total_sales_num"),
     F.countDistinct("order_id").alias("total_order_num"),
-    F.avg("pay_amount").cast("decimal(10,2)").alias("avg_price")
+    F.avg("pay_amount").cast("DOUBLE").alias("avg_price")
 ) \
     .withColumn("stat_date", F.lit(process_date_ymd)) \
     .withColumn("stat_period", F.lit("day"))
@@ -121,10 +121,10 @@ spark.sql("""
 CREATE EXTERNAL TABLE IF NOT EXISTS gd02.dws_product_visit_summary (
     product_id INT COMMENT '商品ID',
     category_id INT COMMENT '分类ID',
-    total_visitor_num INT COMMENT '总访客数',
+    total_visitor_num BIGINT COMMENT '总访客数',
     total_visit_num INT COMMENT '总访问次数',
     source_visitor_map MAP<STRING, INT> COMMENT '各来源访客数映射',
-    pay_conversion_rate DECIMAL(5,2) COMMENT '支付转化率(%)',
+    pay_conversion_rate DOUBLE COMMENT '支付转化率(%)',
     stat_date STRING COMMENT '统计日期'
 ) 
 PARTITIONED BY (stat_period STRING COMMENT '统计周期（day/week/month）')
@@ -133,21 +133,30 @@ LOCATION '/warehouse/gd02/dws/dws_product_visit_summary'
 TBLPROPERTIES ('parquet.compression' = 'snappy');
 """)
 
-# 访问数据汇总
-visit_summary = spark.table("gd02.dwd_product_visit_detail").alias("visit") \
+# 访问数据汇总 - 修复版本
+# 先进行基础聚合
+visit_base_summary = spark.table("gd02.dwd_product_visit_detail").alias("visit") \
     .filter(F.col("dt") == process_date) \
     .groupBy(
     F.col("product_id"),
-    F.col("category_id")
+    F.col("category_id"),
+    F.col("source_name")
 ) \
     .agg(
-    F.countDistinct("user_id").alias("total_visitor_num"),
-    F.count("*").alias("total_visit_num"),
+    F.countDistinct("user_id").alias("source_visitor_num"),
+    F.count("*").alias("source_visit_num")
+)
+
+# 构建 source_visitor_map
+source_visitor_map_df = visit_base_summary.groupBy("product_id", "category_id") \
+    .agg(
     F.map_from_entries(
         F.collect_list(
-            F.struct("source_name", F.countDistinct("user_id").alias("cnt"))
+            F.struct("source_name", "source_visitor_num")
         )
-    ).alias("source_visitor_map")
+    ).alias("source_visitor_map"),
+    F.sum("source_visitor_num").alias("total_visitor_num"),
+    F.sum("source_visit_num").alias("total_visit_num")
 )
 
 # 关联支付数据计算转化率
@@ -159,7 +168,7 @@ pay_conversion = spark.table("gd02.dwd_product_sale_detail").alias("sale") \
 )
 
 # 合并计算转化率
-final_visit_summary = visit_summary.join(
+final_visit_summary = source_visitor_map_df.join(
     pay_conversion,
     on="product_id",
     how="left"
@@ -168,12 +177,13 @@ final_visit_summary = visit_summary.join(
     F.round(
         (F.col("pay_user_num") / F.col("total_visitor_num")) * 100,
         2
-    ).cast("decimal(5,2)")
+    ).cast("DOUBLE")
 ).withColumn(
     "stat_date", F.lit(process_date_ymd)
 ).withColumn(
     "stat_period", F.lit("day")
 ).fillna(0, subset=["pay_conversion_rate", "pay_user_num"])
+
 
 print_data_count(final_visit_summary, "dws_product_visit_summary")
 
@@ -193,7 +203,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gd02.dws_sku_sale_summary (
     sku_id INT COMMENT 'SKU ID',
     product_id INT COMMENT '商品ID',
     total_pay_num INT COMMENT '总支付件数',
-    pay_num_ratio DECIMAL(5,2) COMMENT '支付件数占比(%)',
+    pay_num_ratio DOUBLE COMMENT '支付件数占比(%)',
     current_stock INT COMMENT '当前库存',
     stock_sale_days INT COMMENT '库存可售天数',
     stat_date STRING COMMENT '统计日期'
@@ -240,7 +250,7 @@ final_sku_summary = sku_sale.join(
     F.round(
         (F.col("total_pay_num") / F.col("product_total_pay_num")) * 100,
         2
-    ).cast("decimal(5,2)")
+    ).cast("DOUBLE")
 ).withColumn(
     # 计算库存可售天数（当前库存/日均销量）
     "stock_sale_days",

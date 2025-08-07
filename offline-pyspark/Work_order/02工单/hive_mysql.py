@@ -184,9 +184,9 @@ if __name__ == "__main__":
         'port': 3306,
         'user': 'root',
         'password': 'root',
-        'database': 'gd10'
+        'database': 'gd02'
     }
 
-    syncer = HiveToMySQLSync(spark, "gd10", config)
+    syncer = HiveToMySQLSync(spark, "gd02", config)
     syncer.run_sync()
     spark.stop()
