@@ -11,7 +11,7 @@ from functools import wraps
 
 # ==================== 动态配置字段（请在此处修改）====================
 # 数据库配置
-MYSQL_DB = "gd1"  # 目标数据库名
+MYSQL_DB = "gd01"  # 目标数据库名
 # 动态数据生成配置
 TOTAL_RECORDS = 3000  # 总记录数
 BATCH_SIZE = 1000  # 每批次记录数

@@ -1,6 +1,7 @@
 from pyspark.sql import SparkSession
 import pymysql
 import logging
+from pyspark.sql import functions as F
 from typing import Dict, List, Tuple
 
 # 配置日志记录
@@ -19,6 +20,13 @@ class HiveToMySQLSync:
         self.hive_db = hive_db
         self.mysql_config = mysql_config
         self.batch_size = 10000  # 批量插入记录数
+        # 指定需要同步的表
+        self.target_tables = [
+            'ads_category_sale_ranking',
+            'ads_hot_product_ranking',
+            'ads_hot_search_word',
+            'ads_platform_core_index'
+        ]
 
     def get_mysql_connection(self):
         """获取MySQL连接并设置自动重连"""
@@ -34,12 +42,10 @@ class HiveToMySQLSync:
         )
 
     def get_hive_tables(self) -> List[str]:
-        """获取Hive库中所有表名，排除临时表"""
-        tables = [row.tableName for row in
-                  self.spark.sql(f"SHOW TABLES IN {self.hive_db}").collect()
-                  if not row.tableName.startswith('tmp_')]
-        logging.info(f"发现 {len(tables)} 张待同步表")
-        return tables
+        """获取指定需要同步的Hive表名"""
+        # 只返回指定的表列表
+        logging.info(f"准备同步 {len(self.target_tables)} 张表: {', '.join(self.target_tables)}")
+        return self.target_tables
 
     def get_hive_table_schema(self, table_name: str) -> Tuple[List[Tuple], str]:
         """获取表结构和注释，增加列名去重逻辑"""
@@ -81,6 +87,9 @@ class HiveToMySQLSync:
             'date': 'DATE',
             'binary': 'BLOB'
         }
+        # 处理数组类型
+        if hive_type.startswith('array<'):
+            return 'TEXT'  # MySQL中使用TEXT存储数组
         if hive_type.startswith('decimal'):
             return hive_type.upper().replace('decimal', 'DECIMAL')
         return type_map.get(hive_type, 'TEXT')
@@ -128,9 +137,79 @@ class HiveToMySQLSync:
             raise
 
     def sync_table_data(self, table_name: str):
-        """批量同步数据到MySQL"""
+        """批量同步数据到MySQL，处理数据类型转换问题"""
         try:
-            df = self.spark.sql(f"SELECT * FROM {self.hive_db}.{table_name}")
+            # 为特定表添加类型转换以解决Parquet读取问题
+            if table_name == 'ads_hot_product_ranking':
+                df = self.spark.read.table(f"{self.hive_db}.{table_name}") \
+                    .filter(F.col("stat_period") == "day") \
+                    .select(
+                    F.col("stat_date"),
+                    F.col("product_id"),
+                    F.col("product_name"),
+                    F.col("category_id"),
+                    F.col("total_sales_amount"),
+                    F.col("total_visit_num").cast("bigint").alias("total_visit_num"),
+                    F.col("conversion_rate"),
+                    F.col("hot_rank"),
+                    F.col("stat_period")
+                )
+            elif table_name == 'ads_platform_core_index':
+                df = self.spark.read.table(f"{self.hive_db}.{table_name}") \
+                    .filter(F.col("stat_period") == "day") \
+                    .select(
+                    F.col("stat_date"),
+                    F.col("total_visitor_num"),
+                    F.col("total_visit_num").cast("bigint").alias("total_visit_num"),
+                    F.col("total_order_num").cast("bigint").alias("total_order_num"),
+                    F.col("total_sales_amount"),
+                    F.col("avg_order_amount"),
+                    F.col("pay_conversion_rate"),
+                    F.col("visitor_avg_stay_time"),
+                    F.col("yoy_growth_rate"),
+                    F.col("mom_growth_rate"),
+                    F.col("stat_period")
+                )
+            elif table_name == 'ads_category_sale_ranking':
+                df = self.spark.read.table(f"{self.hive_db}.{table_name}") \
+                    .filter(F.col("stat_period") == "day") \
+                    .select(
+                    F.col("stat_date"),
+                    F.col("category_id"),
+                    F.col("category_name"),
+                    F.col("total_sales_amount"),
+                    F.col("total_sales_num").cast("bigint").alias("total_sales_num"),
+                    F.col("sales_contribution"),
+                    F.col("sales_rank"),
+                    F.col("stat_period")
+                )
+            elif table_name == 'ads_hot_search_word':
+                # 特别处理包含数组的表
+                df = self.spark.read.table(f"{self.hive_db}.{table_name}") \
+                    .filter(F.col("stat_period") == "day") \
+                    .select(
+                    F.col("stat_date"),
+                    F.col("search_word"),
+                    F.col("total_search_num").cast("int").alias("total_search_num"),
+                    F.col("click_rate"),
+                    F.col("search_rank"),
+                    F.col("related_hot_product_ids"),  # 保持原样，后续处理
+                    F.col("stat_period")
+                )
+            else:
+                # 对于其他表，直接读取
+                df = self.spark.read.table(f"{self.hive_db}.{table_name}")
+
+            # 对于包含数组的列，需要特殊处理
+            if table_name == 'ads_hot_search_word':
+                # 将数组列转换为字符串
+                df = df.withColumn("related_hot_product_ids",
+                                   F.when(F.col("related_hot_product_ids").isNotNull(),
+                                          F.concat(F.lit("["),
+                                                   F.array_join(F.col("related_hot_product_ids"), ","),
+                                                   F.lit("]")))
+                                   .otherwise(F.lit("[]")))
+
             columns = df.schema.names
             rows = df.collect()
 
@@ -154,20 +233,11 @@ class HiveToMySQLSync:
             try:
                 self.sync_table_structure(table)
                 self.sync_table_data(table)
-            except Exception:
-                logging.error(f"表 {table} 同步失败，跳过继续处理其他表")
+            except Exception as e:
+                logging.error(f"表 {table} 同步失败: {str(e)}，跳过继续处理其他表")
                 continue
 
 if __name__ == "__main__":
-    # spark = SparkSession.builder \
-    #     .appName("EnhancedHiveMySQLSync") \
-    #     .config("spark.sql.warehouse.dir", "/user/hive/warehouse") \
-    #     .config("hive.metastore.uris", "thrift://cdh01:9083") \
-    #     .config("spark.hadoop.fs.defaultFS", "hdfs://cdh01:8020") \
-    #     .config("spark.sql.execution.arrow.enabled", "true") \
-    #     .config("spark.sql.parquet.writeLegacyFormat", "true") \
-    #     .enableHiveSupport() \
-    #     .getOrCreate()
     spark = SparkSession.builder \
         .appName("EnhancedHiveMySQLSync") \
         .config("spark.local.dir", "D:/spark_temp") \
@@ -176,6 +246,7 @@ if __name__ == "__main__":
         .config("spark.hadoop.fs.defaultFS", "hdfs://cdh01:8020") \
         .config("spark.sql.execution.arrow.pyspark.enabled", "true") \
         .config("spark.sql.parquet.writeLegacyFormat", "true") \
+        .config("spark.sql.parquet.enableVectorizedReader", "false") \
         .enableHiveSupport() \
         .getOrCreate()
 

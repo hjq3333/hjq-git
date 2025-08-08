@@ -12,6 +12,7 @@ spark = SparkSession.builder \
     .config("spark.driver.host", "localhost") \
     .config("spark.driver.bindAddress", "127.0.0.1") \
     .config("spark.hadoop.fs.defaultFS", "hdfs://cdh01:8020") \
+    .config("spark.sql.parquet.enableVectorizedReader", "false") \
     .enableHiveSupport() \
     .getOrCreate()
 
@@ -52,7 +53,7 @@ def force_delete_hdfs_path(path):
 
 
 # 处理日期参数
-process_date = "20250104"  # 处理日期
+process_date = "20250105"  # 处理日期
 process_date_ymd = datetime.datetime.strptime(process_date, "%Y%m%d").strftime("%Y-%m-%d")
 
 # 计算7天前日期（用于周维度统计）
@@ -70,7 +71,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gd02.dws_product_sale_summary (
     category_name STRING COMMENT '分类名称',
     total_sales_amount DOUBLE COMMENT '总销售额',
     total_sales_num BIGINT COMMENT '总销量',
-    total_order_num INT COMMENT '总订单数',
+    total_order_num BIGINT COMMENT '总订单数',
     avg_price DOUBLE COMMENT '平均客单价',
     stat_date STRING COMMENT '统计日期'
 ) 
@@ -122,7 +123,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS gd02.dws_product_visit_summary (
     product_id INT COMMENT '商品ID',
     category_id INT COMMENT '分类ID',
     total_visitor_num BIGINT COMMENT '总访客数',
-    total_visit_num INT COMMENT '总访问次数',
+    total_visit_num BIGINT COMMENT '总访问次数',
     source_visitor_map MAP<STRING, INT> COMMENT '各来源访客数映射',
     pay_conversion_rate DOUBLE COMMENT '支付转化率(%)',
     stat_date STRING COMMENT '统计日期'
@@ -283,8 +284,8 @@ create_hdfs_dir("/warehouse/gd02/dws/dws_search_word_summary")
 spark.sql("""
 CREATE EXTERNAL TABLE IF NOT EXISTS gd02.dws_search_word_summary (
     search_word STRING COMMENT '搜索词',
-    total_search_num INT COMMENT '总搜索次数',
-    total_visitor_num INT COMMENT '搜索用户数',
+    total_search_num BIGINT COMMENT '总搜索次数',
+    total_visitor_num BIGINT COMMENT '搜索用户数',
     related_product_ids ARRAY<INT> COMMENT '相关商品ID数组',
     stat_date STRING COMMENT '统计日期'
 ) 
@@ -318,4 +319,3 @@ repair_hive_table("dws_search_word_summary")
 
 print("所有DWS层表创建及数据导入完成！")
 spark.stop()
-    

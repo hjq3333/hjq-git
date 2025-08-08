@@ -6,13 +6,13 @@ from pyspark.sql.window import Window
 
 # 初始化SparkSession
 spark = SparkSession.builder \
-    .appName("GD1 ADS Layer") \
+    .appName("gd01 ADS Layer") \
     .master("local[*]") \
     .config("hive.metastore.uris", "thrift://cdh01:9083") \
     .config("spark.driver.host", "localhost") \
     .config("spark.driver.bindAddress", "127.0.0.1") \
     .config("spark.hadoop.fs.defaultFS", "hdfs://cdh01:8020") \
-    .config("spark.local.dir", "E:/spark_temp") \
+    .config("spark.local.dir", "D:/spark_temp") \
     .config("spark.sql.parquet.writeLegacyFormat", "true") \
     .config("spark.sql.parquet.binaryAsString", "true") \
     .enableHiveSupport() \
@@ -22,12 +22,12 @@ spark = SparkSession.builder \
 spark.sparkContext.setLogLevel("WARN")
 
 # 设置当前数据库
-spark.sql("USE gd1")
+spark.sql("USE gd01")
 
 # 设置分区日期
-dt = '20250805'
+dt = '20250806'
 
-print(f"开始处理GD1 ADS层数据，日期分区: {dt}")
+print(f"开始处理gd01 ADS层数据，日期分区: {dt}")
 
 # 工具函数定义
 def create_hdfs_dir(path):
@@ -45,8 +45,8 @@ def create_hdfs_dir(path):
 
 def repair_hive_table(table_name):
     """修复Hive表分区"""
-    spark.sql(f"MSCK REPAIR TABLE gd1.{table_name}")
-    print(f"修复分区完成：gd1.{table_name}")
+    spark.sql(f"MSCK REPAIR TABLE gd01.{table_name}")
+    print(f"修复分区完成：gd01.{table_name}")
 
 def print_data_count(df, table_name):
     """打印数据量用于验证"""
@@ -75,7 +75,7 @@ except Exception as e:
 
 # ====================== 商品效率监控表 ======================
 # 1. 创建HDFS目录
-create_hdfs_dir("/warehouse/gd1/ads/ads_product_efficiency_monitor")
+create_hdfs_dir("/warehouse/gd01/ads/ads_product_efficiency_monitor")
 
 # 2. 删除旧表
 spark.sql("DROP TABLE IF EXISTS ads_product_efficiency_monitor")
@@ -101,7 +101,7 @@ CREATE EXTERNAL TABLE ads_product_efficiency_monitor
 ) COMMENT '商品效率监控表'
 PARTITIONED BY (dt string COMMENT '统计日期')
 STORED AS PARQUET
-LOCATION '/warehouse/gd1/ads/ads_product_efficiency_monitor'
+LOCATION '/warehouse/gd01/ads/ads_product_efficiency_monitor'
 TBLPROPERTIES ('parquet.compress' = 'SNAPPY')
 """)
 
@@ -146,14 +146,14 @@ ads_product_efficiency_monitor.write.mode("overwrite") \
     .option("parquet.writelegacyformat", "true") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
-    .parquet("/warehouse/gd1/ads/ads_product_efficiency_monitor")
+    .parquet("/warehouse/gd01/ads/ads_product_efficiency_monitor")
 
 # 修复分区
 repair_hive_table("ads_product_efficiency_monitor")
 
 # ====================== 商品范围分析表 ======================
 # 1. 创建HDFS目录
-create_hdfs_dir("/warehouse/gd1/ads/ads_product_range_analysis")
+create_hdfs_dir("/warehouse/gd01/ads/ads_product_range_analysis")
 
 # 2. 删除旧表
 spark.sql("DROP TABLE IF EXISTS ads_product_range_analysis")
@@ -175,7 +175,7 @@ CREATE EXTERNAL TABLE ads_product_range_analysis
 ) COMMENT '商品范围分析表'
 PARTITIONED BY (dt string COMMENT '统计日期')
 STORED AS PARQUET
-LOCATION '/warehouse/gd1/ads/ads_product_range_analysis'
+LOCATION '/warehouse/gd01/ads/ads_product_range_analysis'
 TBLPROPERTIES ('parquet.compress' = 'SNAPPY')
 """)
 
@@ -251,7 +251,7 @@ ads_product_range_analysis.write.mode("overwrite") \
     .option("parquet.writelegacyformat", "true") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
-    .parquet("/warehouse/gd1/ads/ads_product_range_analysis")
+    .parquet("/warehouse/gd01/ads/ads_product_range_analysis")
 
 # 修复分区
 repair_hive_table("ads_product_range_analysis")
@@ -270,5 +270,5 @@ spark.sql(f"SELECT * FROM ads_product_efficiency_monitor WHERE dt = '{dt}'").sho
 print("范围分析表前10条数据:")
 spark.sql(f"SELECT * FROM ads_product_range_analysis WHERE dt = '{dt}' LIMIT 10").show()
 
-print("GD1 ADS层数据处理完成!")
+print("gd01 ADS层数据处理完成!")
 spark.stop()

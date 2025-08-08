@@ -6,13 +6,13 @@ from py4j.java_gateway import java_import
 
 # 初始化SparkSession
 spark = SparkSession.builder \
-    .appName("GD1 DWS Layer") \
+    .appName("gd01 DWS Layer") \
     .master("local[*]") \
     .config("hive.metastore.uris", "thrift://cdh01:9083") \
     .config("spark.driver.host", "localhost") \
     .config("spark.driver.bindAddress", "127.0.0.1") \
     .config("spark.hadoop.fs.defaultFS", "hdfs://cdh01:8020") \
-    .config("spark.local.dir", "E:/spark_temp") \
+    .config("spark.local.dir", "D:/spark_temp") \
     .config("spark.sql.parquet.writeLegacyFormat", "true") \
     .config("spark.sql.parquet.binaryAsString", "true") \
     .enableHiveSupport() \
@@ -35,8 +35,8 @@ def create_hdfs_dir(path):
 
 def repair_hive_table(table_name):
     """修复Hive表分区"""
-    spark.sql(f"MSCK REPAIR TABLE gd1.{table_name}")
-    print(f"修复分区完成：gd1.{table_name}")
+    spark.sql(f"MSCK REPAIR TABLE gd01.{table_name}")
+    print(f"修复分区完成：gd01.{table_name}")
 
 def print_data_count(df, table_name):
     """打印数据量用于验证"""
@@ -45,11 +45,11 @@ def print_data_count(df, table_name):
     return count
 
 # 设置当前数据库
-spark.sql("USE gd1")
+spark.sql("USE gd01")
 
 # ====================== DWS层商品效率汇总表 ======================
 # 1. 创建HDFS目录
-create_hdfs_dir("/warehouse/gd1/dws/dws_product_efficiency")
+create_hdfs_dir("/warehouse/gd01/dws/dws_product_efficiency")
 
 # 2. 删除旧表
 spark.sql("DROP TABLE IF EXISTS dws_product_efficiency")
@@ -73,7 +73,7 @@ CREATE EXTERNAL TABLE dws_product_efficiency (
 ) COMMENT '商品效率汇总表'
 PARTITIONED BY (dt string COMMENT '统计日期')
 STORED AS PARQUET
-LOCATION '/warehouse/gd1/dws/dws_product_efficiency'
+LOCATION '/warehouse/gd01/dws/dws_product_efficiency'
 TBLPROPERTIES ('parquet.compress' = 'SNAPPY')
 """)
 
@@ -81,10 +81,10 @@ TBLPROPERTIES ('parquet.compress' = 'SNAPPY')
 print("处理商品效率汇总表数据...")
 
 # 读取DWD层各事实表数据
-dwd_view = spark.sql("SELECT * FROM dwd_product_view WHERE dt = '20250805'")
-dwd_collect = spark.sql("SELECT * FROM dwd_product_collect WHERE dt = '20250805'")
-dwd_cart = spark.sql("SELECT * FROM dwd_product_cart WHERE dt = '20250805'")
-dwd_order = spark.sql("SELECT * FROM dwd_product_order WHERE dt = '20250805'")
+dwd_view = spark.sql("SELECT * FROM dwd_product_view WHERE dt = '20250806'")
+dwd_collect = spark.sql("SELECT * FROM dwd_product_collect WHERE dt = '20250806'")
+dwd_cart = spark.sql("SELECT * FROM dwd_product_cart WHERE dt = '20250806'")
+dwd_order = spark.sql("SELECT * FROM dwd_product_order WHERE dt = '20250806'")
 
 # 按商品ID聚合各维度数据，确保字段类型正确
 view_agg = dwd_view.groupBy("product_id").agg(
@@ -135,7 +135,7 @@ dws_product_efficiency = view_agg.alias("v") \
     F.coalesce(F.col("paid_amount"), F.lit(0.0)).cast("decimal(10,2)").alias("paid_amount"),
     F.coalesce(F.col("paid_user_count"), F.lit(0)).cast("long").alias("paid_user_count"),
     F.lit("2025-08-01").cast("string").alias("stat_date"),
-    F.lit("20250805").cast("string").alias("dt")
+    F.lit("20250806").cast("string").alias("dt")
 )
 
 # 5. 验证数据量
@@ -146,14 +146,14 @@ dws_product_efficiency.write.mode("overwrite") \
     .option("parquet.writelegacyformat", "true") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
-    .parquet("/warehouse/gd1/dws/dws_product_efficiency")
+    .parquet("/warehouse/gd01/dws/dws_product_efficiency")
 
 # 7. 修复分区
 repair_hive_table("dws_product_efficiency")
 
 # ====================== DWS层商品范围分析表 ======================
 # 1. 创建HDFS目录
-create_hdfs_dir("/warehouse/gd1/dws/dws_product_range_analysis")
+create_hdfs_dir("/warehouse/gd01/dws/dws_product_range_analysis")
 
 # 2. 删除旧表
 spark.sql("DROP TABLE IF EXISTS dws_product_range_analysis")
@@ -172,7 +172,7 @@ CREATE EXTERNAL TABLE dws_product_range_analysis (
 ) COMMENT '商品范围分析表'
 PARTITIONED BY (dt string COMMENT '统计日期')
 STORED AS PARQUET
-LOCATION '/warehouse/gd1/dws/dws_product_range_analysis'
+LOCATION '/warehouse/gd01/dws/dws_product_range_analysis'
 TBLPROPERTIES ('parquet.compress' = 'SNAPPY')
 """)
 
@@ -180,8 +180,8 @@ TBLPROPERTIES ('parquet.compress' = 'SNAPPY')
 print("处理商品范围分析表数据...")
 
 # 读取商品效率表和商品维度表数据
-efficiency_data = spark.sql("SELECT * FROM dws_product_efficiency WHERE dt = '20250805'")
-product_dim = spark.sql("SELECT product_id, category_name, price FROM dim_product WHERE dt = '20250805'")
+efficiency_data = spark.sql("SELECT * FROM dws_product_efficiency WHERE dt = '20250806'")
+product_dim = spark.sql("SELECT product_id, category_name, price FROM dim_product WHERE dt = '20250806'")
 
 # 关联商品维度信息
 efficiency_with_dim = efficiency_data.join(product_dim, "product_id", "left")
@@ -222,7 +222,7 @@ dws_product_range_analysis = efficiency_with_dim.groupBy(
     .otherwise(F.lit(0.0))
     .cast("decimal(10,2)")
     .alias("avg_price")
-).withColumn("dt", F.lit("20250805").cast("string"))
+).withColumn("dt", F.lit("20250806").cast("string"))
 
 # 5. 验证数据量
 print_data_count(dws_product_range_analysis, "dws_product_range_analysis")
@@ -232,7 +232,7 @@ dws_product_range_analysis.write.mode("overwrite") \
     .option("parquet.writelegacyformat", "true") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
-    .parquet("/warehouse/gd1/dws/dws_product_range_analysis")
+    .parquet("/warehouse/gd01/dws/dws_product_range_analysis")
 
 # 7. 修复分区
 repair_hive_table("dws_product_range_analysis")
@@ -240,20 +240,20 @@ repair_hive_table("dws_product_range_analysis")
 # 验证DWS层数据
 print("验证DWS层数据:")
 try:
-    efficiency_count = spark.sql("SELECT COUNT(*) as count FROM dws_product_efficiency WHERE dt = '20250805'").collect()[0]['count']
-    range_count = spark.sql("SELECT COUNT(*) as count FROM dws_product_range_analysis WHERE dt = '20250805'").collect()[0]['count']
+    efficiency_count = spark.sql("SELECT COUNT(*) as count FROM dws_product_efficiency WHERE dt = '20250806'").collect()[0]['count']
+    range_count = spark.sql("SELECT COUNT(*) as count FROM dws_product_range_analysis WHERE dt = '20250806'").collect()[0]['count']
     print(f"商品效率汇总表记录数: {efficiency_count}")
     print(f"商品范围分析表记录数: {range_count}")
 
     # 展示部分数据样本
     print("商品效率汇总表样本数据:")
-    spark.sql("SELECT * FROM dws_product_efficiency WHERE dt = '20250805' LIMIT 5").show(truncate=False)
+    spark.sql("SELECT * FROM dws_product_efficiency WHERE dt = '20250806' LIMIT 5").show(truncate=False)
 
     print("商品范围分析表样本数据:")
-    spark.sql("SELECT * FROM dws_product_range_analysis WHERE dt = '20250805' LIMIT 5").show(truncate=False)
+    spark.sql("SELECT * FROM dws_product_range_analysis WHERE dt = '20250806' LIMIT 5").show(truncate=False)
 
 except Exception as e:
     print(f"验证DWS层数据时出错: {e}")
 
-print("GD1 DWS层数据处理完成!")
+print("gd01 DWS层数据处理完成!")
 spark.stop()
