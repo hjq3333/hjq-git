@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from pyspark.sql.window import Window
 
 
-
 # 初始化SparkSession
 spark = SparkSession.builder \
     .appName("ADS_Wireless_Entry_AllPeriods") \

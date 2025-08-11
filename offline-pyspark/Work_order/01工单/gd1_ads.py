@@ -25,7 +25,7 @@ spark.sparkContext.setLogLevel("WARN")
 spark.sql("USE gd01")
 
 # 设置分区日期
-dt = '20250806'
+dt = '20250808'
 
 print(f"开始处理gd01 ADS层数据，日期分区: {dt}")
 
@@ -77,12 +77,12 @@ except Exception as e:
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/ads/ads_product_efficiency_monitor")
 
-# 2. 删除旧表
-spark.sql("DROP TABLE IF EXISTS ads_product_efficiency_monitor")
+# # 2. 删除旧表
+# spark.sql("DROP TABLE IF EXISTS ads_product_efficiency_monitor")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE ads_product_efficiency_monitor
+CREATE EXTERNAL TABLE IF NOT EXISTS ads_product_efficiency_monitor
 (
     `stat_date`          STRING COMMENT '统计日期',
     `time_dimension`     STRING COMMENT '时间维度（日/月/年）',
@@ -142,7 +142,7 @@ print("ADS层商品效率监控表数据:")
 ads_product_efficiency_monitor.show()
 
 # 写入数据
-ads_product_efficiency_monitor.write.mode("overwrite") \
+ads_product_efficiency_monitor.write.mode("append") \
     .option("parquet.writelegacyformat", "true") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
@@ -155,12 +155,12 @@ repair_hive_table("ads_product_efficiency_monitor")
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/ads/ads_product_range_analysis")
 
-# 2. 删除旧表
-spark.sql("DROP TABLE IF EXISTS ads_product_range_analysis")
+# # 2. 删除旧表
+# spark.sql("DROP TABLE IF EXISTS ads_product_range_analysis")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE ads_product_range_analysis
+CREATE EXTERNAL TABLE IF NOT EXISTS ads_product_range_analysis
 (
     `category_name`   STRING COMMENT '类目名称',
     `stat_date`       STRING COMMENT '统计日期',
@@ -247,7 +247,7 @@ print("ADS层商品范围分析表前5条数据:")
 ads_product_range_analysis.show(5)
 
 # 写入数据
-ads_product_range_analysis.write.mode("overwrite") \
+ads_product_range_analysis.write.mode("append") \
     .option("parquet.writelegacyformat", "true") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \

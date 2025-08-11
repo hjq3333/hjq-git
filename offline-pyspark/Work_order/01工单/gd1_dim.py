@@ -64,13 +64,13 @@ print("处理商品维度表...")
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/dim/dim_product")
 
-# 2. 删除旧表和数据
-spark.sql("DROP TABLE IF EXISTS dim_product")
-delete_hdfs_path("/warehouse/gd01/dim/dim_product")
+# # 2. 删除旧表和数据
+# spark.sql("DROP TABLE IF EXISTS dim_product")
+# delete_hdfs_path("/warehouse/gd01/dim/dim_product")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE dim_product
+CREATE EXTERNAL   TABLE IF not EXISTS dim_product
 (
     product_id      STRING COMMENT '商品ID',
     product_name    STRING COMMENT '商品名称',
@@ -104,7 +104,7 @@ dim_product = ods_product_info.select(
 ).withColumn("dt", F.lit("20250806"))
 
 # 写入数据
-dim_product.write.mode("overwrite") \
+dim_product.write.mode("append") \
     .option("compression", "snappy") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
@@ -121,13 +121,13 @@ print("处理用户维度表...")
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/dim/dim_user")
 
-# 2. 删除旧表和数据
-spark.sql("DROP TABLE IF EXISTS dim_user")
-delete_hdfs_path("/warehouse/gd01/dim/dim_user")
+# # 2. 删除旧表和数据
+# spark.sql("DROP TABLE IF EXISTS dim_user")
+# delete_hdfs_path("/warehouse/gd01/dim/dim_user")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE dim_user
+CREATE EXTERNAL   TABLE IF not EXISTS dim_user
 (
     user_id       STRING COMMENT '用户ID',
     user_name     STRING COMMENT '用户名称',
@@ -159,7 +159,7 @@ dim_user = ods_user_info.select(
 ).withColumn("dt", F.lit("20250806"))
 
 # 写入数据
-dim_user.write.mode("overwrite") \
+dim_user.write.mode("append") \
     .option("compression", "snappy") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
@@ -176,13 +176,13 @@ print("处理平台维度表...")
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/dim/dim_platform")
 
-# 2. 删除旧表和数据
-spark.sql("DROP TABLE IF EXISTS dim_platform")
-delete_hdfs_path("/warehouse/gd01/dim/dim_platform")
+# # 2. 删除旧表和数据
+# spark.sql("DROP TABLE IF EXISTS dim_platform")
+# delete_hdfs_path("/warehouse/gd01/dim/dim_platform")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE dim_platform
+CREATE EXTERNAL   TABLE IF not EXISTS dim_platform
 (
     platform_id   STRING COMMENT '平台ID',
     platform_name STRING COMMENT '平台名称',
@@ -216,7 +216,7 @@ dim_platform = platform_ids_from_view.select(
 ).withColumn("dt", F.lit("20250806"))
 
 # 写入数据
-dim_platform.write.mode("overwrite") \
+dim_platform.write.mode("append") \
     .option("compression", "snappy") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
@@ -233,13 +233,13 @@ print("处理支付状态维度表...")
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/dim/dim_payment_status")
 
-# 2. 删除旧表和数据
-spark.sql("DROP TABLE IF EXISTS dim_payment_status")
-delete_hdfs_path("/warehouse/gd01/dim/dim_payment_status")
+# # 2. 删除旧表和数据
+# spark.sql("DROP TABLE IF EXISTS dim_payment_status")
+# delete_hdfs_path("/warehouse/gd01/dim/dim_payment_status")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE dim_payment_status
+CREATE EXTERNAL   TABLE IF not EXISTS dim_payment_status
 (
     status_id     INT COMMENT '支付状态ID',
     status_name   STRING COMMENT '支付状态名称',
@@ -270,7 +270,7 @@ dim_payment_status = payment_status_from_orders.select(
 ).withColumn("dt", F.lit("20250806"))
 
 # 写入数据
-dim_payment_status.write.mode("overwrite") \
+dim_payment_status.write.mode("append") \
     .option("compression", "snappy") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
@@ -287,13 +287,13 @@ print("处理类目维度表...")
 # 1. 创建HDFS目录
 create_hdfs_dir("/warehouse/gd01/dim/dim_category")
 
-# 2. 删除旧表和数据
-spark.sql("DROP TABLE IF EXISTS dim_category")
-delete_hdfs_path("/warehouse/gd01/dim/dim_category")
+# # 2. 删除旧表和数据
+# spark.sql("DROP TABLE IF EXISTS dim_category")
+# delete_hdfs_path("/warehouse/gd01/dim/dim_category")
 
 # 3. 创建外部表
 spark.sql("""
-CREATE EXTERNAL TABLE dim_category
+CREATE EXTERNAL   TABLE IF not EXISTS dim_category
 (
     category_id     STRING COMMENT '类目ID',
     category_name   STRING COMMENT '类目名称',
@@ -328,7 +328,7 @@ dim_category = category_from_products.select(
 ).withColumn("dt", F.lit("20250806"))
 
 # 写入数据
-dim_category.write.mode("overwrite") \
+dim_category.write.mode("append") \
     .option("compression", "snappy") \
     .option("parquet.binaryAsString", "true") \
     .partitionBy("dt") \
