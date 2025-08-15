@@ -1,2 +1,0 @@
-# hjq-git
-hjq

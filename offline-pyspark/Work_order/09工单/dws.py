@@ -88,7 +88,7 @@ wireless_daily_data = spark.table("work_order.dwd_wireless_entry_detail").filter
 print_data_count(wireless_daily_data, "dws_wireless_entry_daily")
 
 # 写入无线端日度汇总表（仅覆盖当前分区）
-wireless_daily_data.write.mode("overwrite") \
+wireless_daily_data.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_wireless_entry_daily/dt={process_date}")
 
 # 修复分区
@@ -128,7 +128,7 @@ pc_daily_data = spark.table("work_order.dwd_pc_entry_detail").filter(
 print_data_count(pc_daily_data, "dws_pc_entry_daily")
 
 # 写入PC端日度汇总表（仅覆盖当前分区）
-pc_daily_data.write.mode("overwrite") \
+pc_daily_data.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_pc_entry_daily/dt={process_date}")
 
 # 修复分区
@@ -231,7 +231,7 @@ wireless_multi_period_data = wireless_day_data.unionByName(wireless_seven_day_da
 print_data_count(wireless_multi_period_data, "dws_wireless_entry_multi_period")
 
 # 写入无线端多周期汇总表（仅覆盖当前分区）
-wireless_multi_period_data.write.mode("overwrite") \
+wireless_multi_period_data.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_wireless_entry_multi_period/dt={process_date}")
 
 # 修复分区
@@ -323,7 +323,7 @@ pc_multi_period_data = pc_day_data.unionByName(pc_seven_day_data).unionByName(pc
 print_data_count(pc_multi_period_data, "dws_pc_entry_multi_period")
 
 # 写入PC端多周期汇总表（仅覆盖当前分区）
-pc_multi_period_data.write.mode("overwrite") \
+pc_multi_period_data.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_pc_entry_multi_period/dt={process_date}")
 
 # 修复分区
@@ -333,9 +333,13 @@ repair_hive_table("dws_pc_entry_multi_period")
 
 
 # ====================== DWS层：PC端店铺页各种页排行每日指标汇总 ======================
-# 创建DWS表 - PC端
+spark.sql("""
+DROP TABLE IF EXISTS work_order.dws_shop_page_daily_summary_pc
+""")
+
 spark.sql("""
 CREATE EXTERNAL TABLE IF NOT EXISTS work_order.dws_shop_page_daily_summary_pc (
+    shop_page_id STRING COMMENT '店铺页唯一标识',
     shop_page_subtype STRING COMMENT '店铺页细分类型（首页/活动页等）',
     data_date DATE COMMENT '数据日期',
     visitor_count BIGINT COMMENT '访客数',
@@ -350,33 +354,39 @@ TBLPROPERTIES ('parquet.compression' = 'snappy');
 
 process_date = '20250701'
 
-# 从DWD层计算DWS指标（只保留需要的字段）- PC端
+# 从 DWD 层计算 DWS 指标，包含 shop_page_id 字段 - PC 端
 dws_data_pc = spark.table("work_order.dwd_shop_page_visit_detail_pc").filter(
     F.col("dt") == process_date
-).groupBy("shop_page_subtype", "data_date") \
+).groupBy("shop_page_id", "shop_page_subtype", "data_date") \
     .agg(
     F.countDistinct("visitor_id").alias("visitor_count"),  # 访客数
     F.count("*").alias("visit_count"),  # 浏览量（访问次数）
-    # 计算平均停留时长（只保留此项）
+    # 计算平均停留时长
     F.avg(F.col("stay_duration").cast(T.DoubleType())).alias("avg_stay_duration")
 ).withColumn("dt", F.lit(process_date))
 
-# 写入DWS表 - PC端
-dws_data_pc.write.mode("overwrite") \
+# 写入 DWS 表 - PC 端
+dws_data_pc.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_shop_page_daily_summary_pc/dt={process_date}")
 
 repair_hive_table("dws_shop_page_daily_summary_pc")
 
-# 验证DWS数据 - PC端
-print("DWS层PC端数据预览：")
+# 验证 DWS 数据 - PC 端
+print("DWS 层 PC 端数据预览：")
 dws_data_pc.show()
-print("DWS层PC端字段类型：")
+print("DWS 层 PC 端字段类型：")
 dws_data_pc.printSchema()
 
+
 # ====================== DWS层：无线端店铺页各种页排行每日指标汇总 ======================
-# 创建DWS表 - 无线端
+# 修改 DWS 层无线端店铺页汇总表结构，添加 shop_page_id 字段
+spark.sql("""
+DROP TABLE IF EXISTS work_order.dws_shop_page_daily_summary_wireless
+""")
+
 spark.sql("""
 CREATE EXTERNAL TABLE IF NOT EXISTS work_order.dws_shop_page_daily_summary_wireless (
+    shop_page_id STRING COMMENT '店铺页唯一标识',
     shop_page_subtype STRING COMMENT '店铺页细分类型（首页/活动页等）',
     data_date DATE COMMENT '数据日期',
     visitor_count BIGINT COMMENT '访客数',
@@ -391,28 +401,29 @@ TBLPROPERTIES ('parquet.compression' = 'snappy');
 
 process_date = '20250701'
 
-# 从DWD层计算DWS指标（只保留需要的字段）- 无线端
+# 从 DWD 层计算 DWS 指标，包含 shop_page_id 字段 - 无线端
 dws_data_wireless = spark.table("work_order.dwd_shop_page_visit_detail_wireless").filter(
     F.col("dt") == process_date
-).groupBy("shop_page_subtype", "data_date") \
+).groupBy("shop_page_id", "shop_page_subtype", "data_date") \
     .agg(
     F.countDistinct("visitor_id").alias("visitor_count"),  # 访客数
     F.count("*").alias("visit_count"),  # 浏览量（访问次数）
-    # 计算平均停留时长（只保留此项）
+    # 计算平均停留时长
     F.avg(F.col("stay_duration").cast(T.DoubleType())).alias("avg_stay_duration")
 ).withColumn("dt", F.lit(process_date))
 
-# 写入DWS表 - 无线端
-dws_data_wireless.write.mode("overwrite") \
+# 写入 DWS 表 - 无线端
+dws_data_wireless.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_shop_page_daily_summary_wireless/dt={process_date}")
 
 repair_hive_table("dws_shop_page_daily_summary_wireless")
 
-# 验证DWS数据 - 无线端
-print("DWS层无线端数据预览：")
+# 验证 DWS 数据 - 无线端
+print("DWS 层无线端数据预览：")
 dws_data_wireless.show()
-print("DWS层无线端字段类型：")
+print("DWS 层无线端字段类型：")
 dws_data_wireless.printSchema()
+
 
 
 
@@ -511,7 +522,7 @@ dws_data_pc = all_pages_pc.groupBy("visitor_id", "jump_date") \
 )
 
 # 3. 写入当日分区（仅覆盖当前日期，保留历史）- PC端
-dws_data_pc.write.mode("overwrite") \
+dws_data_pc.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_instore_path_summary_pc/dt={process_date}")
 
 repair_hive_table("dws_instore_path_summary_pc")
@@ -615,7 +626,7 @@ dws_data_wireless = all_pages_wireless.groupBy("visitor_id", "jump_date") \
 )
 
 # 3. 写入当日分区（仅覆盖当前日期，保留历史）- 无线端
-dws_data_wireless.write.mode("overwrite") \
+dws_data_wireless.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_instore_path_summary_wireless/dt={process_date}")
 
 repair_hive_table("dws_instore_path_summary_wireless")
@@ -663,7 +674,7 @@ dws_data = spark.table("work_order.dwd_pc_entry_detail") \
 )
 
 # 3. 写入当日分区
-dws_data.write.mode("overwrite") \
+dws_data.write.mode("append") \
     .parquet(f"/warehouse/work_order/dws/dws_pc_entry_page_type_analysis/dt={process_date}")
 
 repair_hive_table("dws_pc_entry_page_type_analysis")

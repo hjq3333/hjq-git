@@ -10,7 +10,8 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>Real-Time</module>
+        <module>stream-common</module>
+        <module>stream-realtime</module>
         <module>stream-common</module>
     </modules>
 
