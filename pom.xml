@@ -12,7 +12,6 @@
     <modules>
         <module>stream-common</module>
         <module>stream-realtime</module>
-        <module>stream-common</module>
     </modules>
 
 

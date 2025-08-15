@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/gamll2/ads_gmall.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/gamll2/dim_gmall.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/gamll2/dwd_gmall.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/gamll2/dws_gmall.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/gamll2/ods.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/tms2/ads_tms.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/tms2/dim_tms.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/tms2/dwd_tms.sql" dialect="HiveQL" />
+    <file url="file://$PROJECT_DIR$/tms2/dws_tms.sql" dialect="HiveQL" />
+  </component>
+</project>
