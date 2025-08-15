@@ -10,7 +10,7 @@
     <option name="ignoredFiles">
       <set>
         <option value="$PROJECT_DIR$/online-java/pom.xml" />
-        <option value="$PROJECT_DIR$/stream-common/pom.xml" />
+        <option value="$PROJECT_DIR$/stream-common2/pom.xml" />
       </set>
     </option>
   </component>

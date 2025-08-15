@@ -11,40 +11,82 @@
 
     <artifactId>stream-realtime</artifactId>
 
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!--    <repositories>-->
+    <!--        <repository>-->
+    <!--            <id>cloudera</id>-->
+    <!--            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>-->
+    <!--        </repository>-->
+    <!--    </repositories>-->
+
     <repositories>
+        <!-- 添加Flink官方仓库 -->
         <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+            <id>apache.releases</id>
+            <name>Apache Release Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!-- 保留已有的阿里云仓库 -->
+        <repository>
+            <id>aliyun</id>
+            <url>https://maven.aliyun.com/nexus/content/groups/public</url>
         </repository>
     </repositories>
 
+
     <dependencies>
 
+
+
         <dependency>
-            <groupId>groupId</groupId>
-            <artifactId>stream-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.49</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-statebackend-rocksdb</artifactId>
+            <version>${flink.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-hdfs-client</artifactId>
+            <version>${hadoop.version}</version> <!-- 与集群Hadoop版本一致 -->
+        </dependency>
+
+
+
+
+
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-hdfs</artifactId>
             <version>${hadoop.version}</version>
-            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
             <version>${hadoop.version}</version>
-            <scope>provided</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.32</version> <!-- 可根据实际情况选择合适版本 -->
-        </dependency>
+
+
 
         <!--        flink 流批开发依赖包-->
         <dependency>
@@ -57,7 +99,6 @@
             <artifactId>flink-java</artifactId>
             <version>1.17.1</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -116,26 +157,6 @@
             </exclusions>
             <scope>provided</scope>
         </dependency>
-
-        <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>9.4.1.jre8</version>
-        </dependency>
-
-        <!-- Flink SQL Server CDC 连接器（包含 SqlServerSource） -->
-        <dependency>
-            <groupId>com.ververica</groupId>
-            <artifactId>flink-connector-sqlserver-cdc</artifactId>
-            <version>2.4.1</version> <!-- 版本需与 Flink 版本兼容，2.4.x 适配 Flink 1.15+ -->
-        </dependency>
-        <!-- 方案1：使用Logback（推荐） -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.11</version>
-        </dependency>
-
 
 
 
@@ -196,6 +217,29 @@
             <groupId>com.ververica</groupId>
             <artifactId>flink-connector-mysql-cdc</artifactId>
         </dependency>
+
+        <!--        Flink CDC Pg connector-->
+        <!--        <dependency>-->
+        <!--            <groupId>org.apache.flink</groupId>-->
+        <!--            <artifactId>flink-connector-postgres-cdc</artifactId>-->
+        <!--            <version>3.4.0</version>-->
+        <!--        </dependency>-->
+
+        <dependency>
+            <groupId>com.ververica</groupId>
+            <artifactId>flink-connector-postgres-cdc</artifactId>
+            <version>2.4.2</version>
+            <!--            <scope>provided</scope>-->
+        </dependency>
+
+        <!--        Flink CDC SqlServer connector-->
+        <dependency>
+            <groupId>com.ververica</groupId>
+            <artifactId>flink-connector-sqlserver-cdc</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+
+
 
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -319,21 +363,19 @@
             <version>${flink.version}</version>
             <!--            <scope>provided</scope>-->
         </dependency>
-
-        <!-- Flink SQL Server CDC 连接器（包含 SqlServerSource） -->
         <dependency>
-            <groupId>com.ververica</groupId>
-            <artifactId>flink-connector-sqlserver-cdc</artifactId>
-            <version>2.4.1</version> <!-- 版本需与 Flink 版本兼容，2.4.x 适配 Flink 1.15+ -->
+            <groupId>groupId</groupId>
+            <artifactId>stream-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
-            <groupId>com.microsoft.sqlserver</groupId>
-            <artifactId>mssql-jdbc</artifactId>
-            <version>9.4.1.jre8</version>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-runtime-web</artifactId>
+            <version>${flink.version}</version>
+            <scope>provided</scope>
         </dependency>
-
-
 
     </dependencies>
 
@@ -397,6 +439,7 @@
             </resource>
         </resources>
     </build>
+
 
 
 
