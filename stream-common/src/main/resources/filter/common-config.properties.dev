@@ -8,6 +8,7 @@ mysql.timezone=Asia/Shanghai
 mysql.database=realtime_v1
 mysql.user=root
 mysql.pwd=root
+mysql.databases.conf=realtime_v1_config
 
 # Redis 本地配置
 redis.host=localhost
@@ -16,7 +17,7 @@ redis.user=
 redis.pwd=
 
 # Kafka 本地或开发环境配置（若本地没启动，可填测试集群地址）
-Kafka.bootstrap.servers=192.168.142.128:9092,192.168.142.129:9092,192.168.142.130:9092
+Kafka.bootstrap.servers=192.168.142.128:9092
 REALTIME.KAFKA.LOG.TOPIC=realtime_log
 kafka.dirty.topic=dirty_log
 kafka.err.log=err_log
@@ -24,9 +25,13 @@ kafka.start.log=start_log
 kafka.display.log=display_log
 kafka.action.log=action_log
 kafka.page.topic=ods_page_log
+kafka.cdc.db.topic=mysql_kafka
 
 # Zookeeper 本地配置
 zookeeper.server.host.list=192.168.142.128:2181
+
+#hbase配置
+hbase.namespace=dim
 
 # 暂时不用的服务可留空或注释
 holo.endpoint=

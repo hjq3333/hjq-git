@@ -1,4 +1,4 @@
-package com;
+package com.retailersv1;
 
 import com.alibaba.fastjson.JSONObject;
 import com.retailersv1.func.ProcessSplitStreamFunc;
@@ -70,7 +70,7 @@ public class DbusLogDataProcess2Kafka {
                         kafka_botstrap_servers,
                         kafka_topic_base_log_data,
                         new Date().toString(),
-                        OffsetsInitializer.latest()
+                        OffsetsInitializer.earliest()
                 ),
                 WatermarkStrategy.noWatermarks(),
                 "read_kafka_realtime_log"
