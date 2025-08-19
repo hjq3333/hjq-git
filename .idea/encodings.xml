@@ -7,9 +7,15 @@
     <file url="file://$PROJECT_DIR$/docs/工单设计文档/gd10.md" charset="GBK" />
     <file url="file://$PROJECT_DIR$/online-java/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/online-java/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/realtime-dwd/realtime-dwd-interaction-comment-info/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/realtime-dwd/realtime-dwd-interaction-comment-info/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/realtime-dwd/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/realtime-dwd/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/scala" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/stream-common/realtime-dwd/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/stream-common/realtime-dwd/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/stream-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/stream-common/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/stream-common2/src/main/java" charset="UTF-8" />
