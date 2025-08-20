@@ -11,6 +11,7 @@
       <set>
         <option value="$PROJECT_DIR$/online-java/pom.xml" />
         <option value="$PROJECT_DIR$/stream-common2/pom.xml" />
+        <option value="$PROJECT_DIR$/stream-realtime/src/main/java/com/retailersv1/realtime-dwd/pom.xml" />
       </set>
     </option>
   </component>
