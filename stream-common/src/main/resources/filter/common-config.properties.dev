@@ -26,6 +26,11 @@ kafka.display.log=display_log
 kafka.action.log=action_log
 kafka.page.topic=ods_page_log
 kafka.cdc.db.topic=mysql_kafka
+kafka.dwd.comment.info=dwd_comment_info
+kafka.dwd.cart.info=dwd_cart_info
+kafka.dwd.trade.order.detail=dwd_trade_order_detail
+kafka.dwd.trade.order.cancel.detail=dwd_trade_order_cancel_detail
+kafka.dwd.trade.order.pay.auc.detail=dwd_trade_order_pay_auc_detail
 
 # Zookeeper 本地配置
 zookeeper.server.host.list=192.168.142.128:2181

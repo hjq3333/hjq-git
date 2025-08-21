@@ -26,8 +26,8 @@ public class DwdInteractionCommentInfo {
                 "  `source` MAP<STRING,STRING>,\n" +
                 "  `ts_ms` BIGINT,\n" +
                 "   proc_time AS proctime()" +
-                ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "retailersv_ods_ecommerce_order"));
-//        tEnv.executeSql("select * from ods_ecommerce_order where `source`['table'] = 'comment_info' ").print();
+                ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "first"));
+
 
 
 
@@ -41,7 +41,7 @@ public class DwdInteractionCommentInfo {
                 "proc_time\n" +
                 "from ods_ecommerce_order\n" +
                 "where `source`['table'] = 'comment_info'");
-//        commentInfo.execute().print();
+
         // 将表对象注册到表执行环境中
         tEnv.createTemporaryView("comment_info", commentInfo);
 
@@ -51,7 +51,7 @@ public class DwdInteractionCommentInfo {
                 " info ROW<dic_name STRING>,\n" +
                 " PRIMARY KEY (dic_code) NOT ENFORCED\n" +
                 ")"+SqlUtil.getHbaseDDL("dim_base_dic"));
-//        tEnv.executeSql("select * from base_dic").print();
+
 
         // 将评论表和字典表进行关联
         Table joinTable = tEnv.sqlQuery("SELECT id,\n" +
@@ -64,7 +64,7 @@ public class DwdInteractionCommentInfo {
                 "FROM comment_info AS c\n" +
                 "  JOIN base_dic FOR SYSTEM_TIME AS OF c.proc_time AS dic\n" +
                 "    ON c.appraise = dic.dic_code");
-        joinTable.execute().print();
+//        joinTable.execute().print();
 
 
         // 将关联后的表数据写入 kafka
@@ -78,7 +78,7 @@ public class DwdInteractionCommentInfo {
                 "      ts BIGINT,\n" +
                 "  PRIMARY KEY (id) NOT ENFORCED\n" +
                 ")"+SqlUtil.getUpsertKafkaDDL(DWD_COMMENT_INFO));
-// 6. 唯一触发点：写入目标表
+        // 6. 唯一触发点：写入目标表
         joinTable.executeInsert(DWD_COMMENT_INFO);
 
     }

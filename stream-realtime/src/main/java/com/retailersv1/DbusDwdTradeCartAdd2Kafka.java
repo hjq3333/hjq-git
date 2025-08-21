@@ -25,8 +25,7 @@ public class DbusDwdTradeCartAdd2Kafka {
                 "  `source` MAP<STRING,STRING>,\n" +
                 "  `ts_ms` BIGINT,\n" +
                 "   proc_time AS proctime()" +
-                ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "retailersv_ods_ecommerce_order"));
-//        tableEnv.executeSql("select * from ods_ecommerce_order where `source`['table'] = 'cart_info ").print();
+                ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "first"));
 
         Table cartInfo = tableEnv.sqlQuery("select\n" +
                 "`after`['id'] id,\n" +
@@ -41,7 +40,7 @@ public class DbusDwdTradeCartAdd2Kafka {
                 "or\n" +
                 "(`op` = 'u' and `before`['sku_num'] is not null and (cast(`after`['sku_num'] as int) > cast(`before`['sku_num'] as int)) )\n" +
                 ")");
-        cartInfo.execute().print();
+//        cartInfo.execute().print();
 
         tableEnv.executeSql("CREATE TABLE "+DWD_CART_INFO+" (\n" +
                 "      id String,\n" +
