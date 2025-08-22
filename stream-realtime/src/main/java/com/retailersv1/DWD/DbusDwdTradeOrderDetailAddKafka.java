@@ -1,4 +1,4 @@
-package com.retailersv1;
+package com.retailersv1.DWD;
 
 import com.stream.common.utils.ConfigUtils;
 import com.stream.common.utils.EnvironmentSettingUtils;
@@ -48,9 +48,11 @@ public class DbusDwdTradeOrderDetailAddKafka {
                 "`after`['split_total_amount'] split_total_amount,\n" +
                 "`after`['split_activity_amount'] split_activity_amount,\n" +
                 "`after`['split_coupon_amount'] split_coupon_amount,\n" +
-                "ts_ms as ts\n" +
+                "ts_ms \n" +
                 "from ods_ecommerce_data\n" +
                 "where `source`['table'] = 'order_detail'");
+
+//        orderDetail.execute().print();
 
 
 
@@ -59,7 +61,7 @@ public class DbusDwdTradeOrderDetailAddKafka {
                 "`after`['id'] id,\n" +
                 "`after`['user_id'] user_id,\n" +
                 "`after`['province_id'] province_id,\n" +
-                "ts_ms as ts\n" +
+                "ts_ms \n" +
                 "from ods_ecommerce_data\n" +
                 "where `source`['table'] = 'order_info'");
 
@@ -70,7 +72,7 @@ public class DbusDwdTradeOrderDetailAddKafka {
                 "`after`['order_detail_id'] order_detail_id,\n" +
                 "`after`['activity_id'] activity_id,\n" +
                 "`after`['activity_rule_id'] activity_rule_id,\n" +
-                "ts_ms as ts\n" +
+                "ts_ms \n" +
                 "from ods_ecommerce_data\n" +
                 "where `source`['table'] = 'order_detail_activity'");
 
@@ -80,7 +82,7 @@ public class DbusDwdTradeOrderDetailAddKafka {
         Table orderDetailCoupon = tEnv.sqlQuery("select\n" +
                 "`after`['order_detail_id'] order_detail_id,\n" +
                 "`after`['coupon_id'] coupon_id,\n" +
-                "ts_ms as ts\n" +
+                "ts_ms \n" +
                 "from ods_ecommerce_data\n" +
                 "where `source`['table'] = 'order_detail_coupon'");
 
@@ -110,7 +112,7 @@ public class DbusDwdTradeOrderDetailAddKafka {
                 "od.split_activity_amount,\n" +
                 "od.split_coupon_amount,\n" +
                 "od.split_total_amount,\n" +
-                "od.ts\n" +
+                "od.ts_ms\n" +
                 "from order_detail od\n" +
                 "join order_info oi on od.order_id=oi.id\n" +
                 "left join order_detail_activity act on od.id=act.order_detail_id\n" +
@@ -136,10 +138,10 @@ public class DbusDwdTradeOrderDetailAddKafka {
                 "split_activity_amount string,\n" +
                 "split_coupon_amount string,\n" +
                 "split_total_amount string,\n" +
-                "ts bigint,\n" +
+                "ts_ms bigint,\n" +
                 "primary key(id) not enforced\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_DETAIL));
 
-        result.executeInsert(DWD_TRADE_ORDER_DETAIL);
+//        result.executeInsert(DWD_TRADE_ORDER_DETAIL);
     }
 }

@@ -31,6 +31,8 @@ kafka.dwd.cart.info=dwd_cart_info
 kafka.dwd.trade.order.detail=dwd_trade_order_detail
 kafka.dwd.trade.order.cancel.detail=dwd_trade_order_cancel_detail
 kafka.dwd.trade.order.pay.auc.detail=dwd_trade_order_pay_auc_detail
+kafka.dwd.trade.order.refund=dwd_trade_order_refund
+kafka.dwd.trade.refund.pay.suc.detail=dwd_trade_refund_pay_suc_detail
 
 # Zookeeper 本地配置
 zookeeper.server.host.list=192.168.142.128:2181
@@ -42,3 +44,8 @@ hbase.namespace=dim
 holo.endpoint=
 ali.key=
 ali.pwd=
+
+
+#doris 配置
+doris.fe.nodes=192.168.142.128:2004
+doris.database=dim

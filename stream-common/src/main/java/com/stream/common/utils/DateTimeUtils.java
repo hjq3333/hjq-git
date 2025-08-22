@@ -30,4 +30,9 @@ public final class DateTimeUtils {
         LocalDateTime localDateTime = LocalDateTime.ofInstant(dt.toInstant(), ZoneId.systemDefault());
         return dtf.format(localDateTime);
     }
+
+    public static String tsToDateTime(Long ts) {
+        Date dt = new Date(ts);
+        return format(dt, YYYY_MM_DD_HH_MM_SS);
+    }
 }

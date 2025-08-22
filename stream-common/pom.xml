@@ -21,6 +21,17 @@
             <id>cloudera</id>
             <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
         </repository>
+        <!-- 添加 Apache Doris 仓库 -->
+        <repository>
+            <id>apache-releases</id>
+            <url>https://repository.apache.org/content/repositories/releases/</url>
+        </repository>
+
+        <!-- 或者添加 Doris 的其他可能仓库 -->
+        <repository>
+            <id>doris</id>
+            <url>https://raw.githubusercontent.com/apache/doris/mvn-repo/</url>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -99,6 +110,34 @@
             <version>${hadoop.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.janeluo</groupId>
+            <artifactId>ikanalyzer</artifactId>
+            <version>2012_u6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-api-java</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-common</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.doris</groupId>
+            <artifactId>flink-doris-connector-1.16</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+
+
+
     </dependencies>
     <profiles>
         <profile>

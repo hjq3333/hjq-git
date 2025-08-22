@@ -1,4 +1,4 @@
-package com.retailersv1;
+package com.retailersv1.DWD;
 
 import com.stream.common.utils.ConfigUtils;
 import com.stream.common.utils.EnvironmentSettingUtils;
@@ -13,7 +13,7 @@ public class DbusDwdTradeOrderRefund {
 
     private static final String ODS_KAFKA_TOPIC = ConfigUtils.getString("kafka.cdc.db.topic");
 
-//    private static final String DWD_TRADE_ORDER_REFUND = ConfigUtils.getString("kafka.dwd.trade.order.refund");
+    private static final String DWD_TRADE_ORDER_REFUND = ConfigUtils.getString("kafka.dwd.trade.order.refund");
 
     public static void main(String[] args) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -48,17 +48,19 @@ public class DbusDwdTradeOrderRefund {
                 "`after`['user_id'] user_id," +
                 "`after`['order_id'] order_id," +
                 "`after`['sku_id'] sku_id," +
-                "`after`['refund_type'] refund_type," +
+                "MD5(CAST(`after`['refund_type'] AS STRING)) refund_type," +
                 "`after`['refund_num'] refund_num," +
                 "`after`['refund_amount'] refund_amount," +
-                "`after`['refund_reason_type'] refund_reason_type," +
+                "MD5(CAST(`after`['refund_reason_type'] AS STRING)) refund_reason_type," +
                 "`after`['refund_reason_txt'] refund_reason_txt," +
                 "`after`['create_time'] create_time," +
                 "proc_time as pt," +
-                "ts_ms as ts " +
+                "ts_ms  " +
                 "from ods_ecommerce_data " +
                 "where `source`['table']='order_refund_info' ");
         tEnv.createTemporaryView("order_refund_info", orderRefundInfo);
+
+//        orderRefundInfo.execute().print();
 
 
         // 4. 过滤订单表退单数据（order_info update操作）
@@ -67,10 +69,11 @@ public class DbusDwdTradeOrderRefund {
                 "`after`['province_id'] province_id " +
                 "from ods_ecommerce_data " +
                 "where `source`['table']='order_info' " +
+                "and `op` = 'u' " +
                 "and `after`['order_status']='1005'");
         tEnv.createTemporaryView("order_info", orderInfo);
 
-        orderInfo.execute().print();
+//        orderInfo.execute().print();
 
         // 5. 多表关联
         Table result = tEnv.sqlQuery("select " +
@@ -88,7 +91,7 @@ public class DbusDwdTradeOrderRefund {
                 "ri.refund_reason_txt," +
                 "ri.refund_num," +
                 "ri.refund_amount," +
-                "ri.ts " +
+                "ri.ts_ms " +
                 "from order_refund_info ri " +
                 "join order_info oi " +
                 "on ri.order_id = oi.id " +
@@ -97,27 +100,29 @@ public class DbusDwdTradeOrderRefund {
                 "join base_dic for system_time as of ri.pt as dic2 " +
                 "on ri.refund_reason_type = dic2.dic_code ");
 
-//        // 6. 创建目标表并写出
-//        tEnv.executeSql("CREATE TABLE " + DWD_TRADE_ORDER_REFUND + " (\n" +
-//                "id string,\n" +
-//                "user_id string,\n" +
-//                "order_id string,\n" +
-//                "sku_id string,\n" +
-//                "province_id string,\n" +
-//                "date_id string,\n" +
-//                "create_time string,\n" +
-//                "refund_type_code string,\n" +
-//                "refund_type_name string,\n" +
-//                "refund_reason_type_code string,\n" +
-//                "refund_reason_type_name string,\n" +
-//                "refund_reason_txt string,\n" +
-//                "refund_num string,\n" +
-//                "refund_amount string,\n" +
-//                "ts bigint,\n" +
-//                "primary key(id) not enforced\n" +
-//                ")" + SqlUtil.getUpsertKafkaDDL(Constant.TOPIC_DWD_TRADE_ORDER_REFUND));
-//
-//        result.executeInsert(DWD_TRADE_ORDER_REFUND);
+//        result.execute().print();
+
+        // 6. 创建目标表并写出
+        tEnv.executeSql("CREATE TABLE " + DWD_TRADE_ORDER_REFUND + " (\n" +
+                "id string,\n" +
+                "user_id string,\n" +
+                "order_id string,\n" +
+                "sku_id string,\n" +
+                "province_id string,\n" +
+                "date_id string,\n" +
+                "create_time string,\n" +
+                "refund_type_code string,\n" +
+                "refund_type_name string,\n" +
+                "refund_reason_type_code string,\n" +
+                "refund_reason_type_name string,\n" +
+                "refund_reason_txt string,\n" +
+                "refund_num string,\n" +
+                "refund_amount string,\n" +
+                "ts_ms bigint,\n" +
+                "primary key(id) not enforced\n" +
+                ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_REFUND));
+
+        result.executeInsert(DWD_TRADE_ORDER_REFUND);
 
     }
 }

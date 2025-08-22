@@ -1,4 +1,4 @@
-package com.retailersv1;
+package com.retailersv1.DWD;
 
 import com.stream.common.utils.ConfigUtils;
 import com.stream.common.utils.EnvironmentSettingUtils;
@@ -7,7 +7,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
-public class DwdInteractionCommentInfo {
+public class DbusDwdInteractionCommentInfo {
     private static final String ODS_KAFKA_TOPIC = ConfigUtils.getString("kafka.cdc.db.topic");
     private static final String DWD_COMMENT_INFO = ConfigUtils.getString("kafka.dwd.comment.info");
 
