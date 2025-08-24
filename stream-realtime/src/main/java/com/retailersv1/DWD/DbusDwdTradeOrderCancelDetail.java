@@ -66,12 +66,10 @@ public class DbusDwdTradeOrderCancelDetail {
                 "ts_ms  " +
                 "from mysql_kafka " +
                 "where `source`['table']='order_info' " +
-                "and `op` = 'u' " +
-                "and `before`['order_status']='1001' " +
                 "and `after`['order_status']='1003'");
         tEnv.createTemporaryView("order_cancel", orderCancel);
 
-//        orderCancel.execute().print();
+        //orderCancel.execute().print();
 
 
 

@@ -87,6 +87,7 @@ public class DbusDwdTradeRefundPaySucDetail {
                 "and `after`['order_status']='1006'");
         tEnv.createTemporaryView("order_info", orderInfo);
 
+        //orderInfo.execute().print();
 
 
         // 6. 四表关联（内连接 + 维表Lookup Join）
@@ -130,7 +131,7 @@ public class DbusDwdTradeRefundPaySucDetail {
                 "primary key(id) not enforced\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_REFUND_PAY_SUC_DETAIL));
 
-        result.executeInsert(DWD_TRADE_REFUND_PAY_SUC_DETAIL);
+        //result.executeInsert(DWD_TRADE_REFUND_PAY_SUC_DETAIL);
 
     }
 }

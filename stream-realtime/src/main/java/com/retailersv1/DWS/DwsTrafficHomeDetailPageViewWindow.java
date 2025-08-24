@@ -1,11 +1,10 @@
 package com.retailersv1.DWS;
 
 import com.alibaba.fastjson.JSONObject;
-import com.retailersv1.dws.comment.TrafficHomeDetailPageViewBean;
-import com.retailersv1.func.BeanToJsonStrMapFunction;
+
 import com.retailersv1.func.FilterBloomDeduplicatorFunc;
+import com.stream.common.bean.TrafficHomeDetailPageViewBean;
 import com.stream.common.utils.*;
-import com.stream.utils.DorisUtils;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
@@ -151,7 +150,12 @@ public class DwsTrafficHomeDetailPageViewWindow {
 }
 
 
+//Properties properties = new Properties();
 
+//
+//// 在创建 DorisSink 时应用这些属性
+//DorisSink.Builder<YourDataType> builder = DorisSink.builder();
+//builder.setDorisSinkProperties(properties);
 
 
 

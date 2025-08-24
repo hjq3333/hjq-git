@@ -73,7 +73,7 @@ public class DbusDwdTradeOrderRefund {
                 "and `after`['order_status']='1005'");
         tEnv.createTemporaryView("order_info", orderInfo);
 
-//        orderInfo.execute().print();
+        orderInfo.execute().print();
 
         // 5. 多表关联
         Table result = tEnv.sqlQuery("select " +
@@ -122,7 +122,7 @@ public class DbusDwdTradeOrderRefund {
                 "primary key(id) not enforced\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_REFUND));
 
-        result.executeInsert(DWD_TRADE_ORDER_REFUND);
+        //result.executeInsert(DWD_TRADE_ORDER_REFUND);
 
     }
 }

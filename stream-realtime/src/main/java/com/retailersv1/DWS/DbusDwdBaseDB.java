@@ -13,6 +13,10 @@ public class DbusDwdBaseDB {
 
     private static final String PAGE_TOPIC = ConfigUtils.getString("kafka.page.topic");
 
+    private static final String DORIS_FE_NODES = ConfigUtils.getString("doris.fe.nodes");
+
+    private static final String DORIS_DATABASE = ConfigUtils.getString("doris.database");
+
     public static void main(String[] args) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         EnvironmentSettingUtils.defaultParameter(env);
@@ -59,19 +63,19 @@ public class DbusDwdBaseDB {
 
         result.execute().print();
 
-//        // 5. 写出到 doris 中
+        // 5. 写出到 doris 中
 //        tEnv.executeSql("create table dws_traffic_source_keyword_page_view_window(" +
-//                "  stt string, " +  // 2023-07-11 14:14:14
+//                "  stt string, " +
 //                "  edt string, " +
 //                "  cur_date string, " +
 //                "  keyword string, " +
 //                "  keyword_count bigint " +
 //                ")with(" +
 //                " 'connector' = 'doris'," +
-//                " 'fenodes' = '" + Constant.DORIS_FE_NODES + "'," +
-//                "  'table.identifier' = '" + Constant.DORIS_DATABASE + ".dws_traffic_source_keyword_page_view_window'," +
-//                "  'username' = 'root'," +
-//                "  'password' = '000000', " +
+//                " 'fenodes' = '" + DORIS_FE_NODES + "'," +
+//                "  'table.identifier' = '" + DORIS_DATABASE + ".dws_traffic_source_keyword_page_view_window'," +
+//                "  'username' = 'admin'," +
+//                "  'password' = '', " +
 //                "  'sink.properties.format' = 'json', " +
 //                "  'sink.buffer-count' = '4', " +
 //                "  'sink.buffer-size' = '4086'," +

@@ -28,6 +28,8 @@ public class DbusDwdInteractionCommentInfo {
                 "   proc_time AS proctime()" +
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "first"));
 
+        //tEnv.executeSql("select * from ods_ecommerce_order").print();
+
 
 
 

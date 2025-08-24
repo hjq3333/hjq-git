@@ -1,9 +1,9 @@
 env=dev
 
 # MySQL 本地开发配置
-mysql.host=192.168.142.130
+mysql.host=cdh03
 mysql.port=3306
-mysql.url=jdbc:mysql://192.168.142.130:3306/realtime_v1?useSSL=false&serverTimezone=Asia/Shanghai
+mysql.url=jdbc:mysql://cdh03:3306/realtime_v1?useSSL=false&serverTimezone=Asia/Shanghai
 mysql.timezone=Asia/Shanghai
 mysql.database=realtime_v1
 mysql.user=root
@@ -48,4 +48,4 @@ ali.pwd=
 
 #doris 配置
 doris.fe.nodes=192.168.142.128:2004
-doris.database=dim
+doris.database=dws

@@ -3,9 +3,11 @@ package com.stream.common.utils;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.crypto.SecureUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.CaseFormat;
 import com.google.common.collect.Lists;
 import com.stream.common.domain.HBaseInfo;
 import lombok.SneakyThrows;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
@@ -218,4 +220,41 @@ public class HbaseUtils {
         hbaseUtils.deleteTable("ns_zxn:dim_base_category1");
 //        hbaseUtils.getHbaseNameSpaceAllTablesList("realtime_v2");
     }
+
+    public static <T> T getRow(Connection hbaseConn,
+                               String nameSpace,
+                               String table,
+                               String rowKey,
+                               Class<T> tClass,
+                               boolean... isUnderlineToCamel) {
+        boolean defaultIsUToC = false;  // 默认不执行下划线转驼峰
+
+        if (isUnderlineToCamel.length > 0) {
+            defaultIsUToC = isUnderlineToCamel[0];
+        }
+
+        try (Table Table = hbaseConn.getTable(TableName.valueOf(nameSpace, table))) { // jdk1.7 : 可以自动释放资源
+            Get get = new Get(Bytes.toBytes(rowKey));
+            Result result = Table.get(get);
+            // 4. 把查询到的一行数据,封装到一个对象中: JSONObject
+            // 4.1 一行中所有的列全部解析出来
+            List<Cell> cells = result.listCells();  // 一个 Cell 表示这行中的一列
+            T t = tClass.newInstance();
+            for (Cell cell : cells) {
+                // 取出每列的列名(json 对象的中的 key)和列值(json 对象中的 value)
+                String key = Bytes.toString(CellUtil.cloneQualifier(cell));
+                if (defaultIsUToC) { // 需要下划线转驼峰:  a_a => aA a_aaaa_aa => aAaaaAa
+                    key = CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, key);
+                }
+                String value = Bytes.toString(CellUtil.cloneValue(cell));
+
+                BeanUtils.setProperty(t, key, value);
+            }
+            return t;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }

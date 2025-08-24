@@ -142,6 +142,6 @@ public class DbusDwdTradeOrderDetailAddKafka {
                 "primary key(id) not enforced\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_DETAIL));
 
-//        result.executeInsert(DWD_TRADE_ORDER_DETAIL);
+        result.executeInsert(DWD_TRADE_ORDER_DETAIL);
     }
 }

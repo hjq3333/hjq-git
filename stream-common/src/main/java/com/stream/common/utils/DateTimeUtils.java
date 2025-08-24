@@ -35,4 +35,9 @@ public final class DateTimeUtils {
         Date dt = new Date(ts);
         return format(dt, YYYY_MM_DD_HH_MM_SS);
     }
+
+    public static long dateToTs(String dateStr) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        return sdf.parse(dateStr).getTime();
+    }
 }

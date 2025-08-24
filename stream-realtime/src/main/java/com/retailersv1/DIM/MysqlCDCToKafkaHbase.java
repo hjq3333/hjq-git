@@ -1,4 +1,4 @@
-package com.retailersv1;
+package com.retailersv1.DIM;
 
 import com.alibaba.fastjson.JSONObject;
 import com.retailersv1.func.MapUpdateHbaseDimTableFunc;

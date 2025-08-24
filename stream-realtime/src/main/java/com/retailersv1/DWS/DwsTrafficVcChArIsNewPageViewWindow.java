@@ -1,10 +1,8 @@
 package com.retailersv1.DWS;
 
 import com.alibaba.fastjson.JSONObject;
-import com.retailersv1.dws.comment.TrafficPageViewBean;
-import com.retailersv1.func.BeanToJsonStrMapFunction;
+import com.stream.common.bean.TrafficPageViewBean;
 import com.stream.common.utils.*;
-import com.stream.utils.DorisUtils;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.eventtime.SerializableTimestampAssigner;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;

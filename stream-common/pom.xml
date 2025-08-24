@@ -17,20 +17,33 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <repositories>
-        <repository>
-            <id>cloudera</id>
-            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-        </repository>
-        <!-- 添加 Apache Doris 仓库 -->
+        <!-- Apache 发布仓库（包含 Doris 正式版本） -->
         <repository>
             <id>apache-releases</id>
             <url>https://repository.apache.org/content/repositories/releases/</url>
         </repository>
 
-        <!-- 或者添加 Doris 的其他可能仓库 -->
         <repository>
-            <id>doris</id>
-            <url>https://raw.githubusercontent.com/apache/doris/mvn-repo/</url>
+            <id>apache</id>
+            <url>https://repo.maven.apache.org/maven2/</url>
+        </repository>
+        <!-- Doris 镜像仓库（确保能找到依赖） -->
+        <repository>
+            <id>doris-mirror</id>
+            <url>https://mirrors.tuna.tsinghua.edu.cn/apache/doris/</url>
+        </repository>
+        <!-- Doris 快照仓库（若使用快照版本） -->
+        <repository>
+            <id>apache-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <!-- 阿里云公共仓库（作为补充） -->
+        <repository>
+            <id>aliyun-public</id>
+            <url>https://maven.aliyun.com/repository/public</url>
         </repository>
     </repositories>
     <dependencies>
@@ -136,6 +149,12 @@
             <version>2.15.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.doris</groupId>
+            <artifactId>flink-doris-connector-1.16</artifactId>
+            <version>1.5.0</version>
+            <scope>compile</scope>
+        </dependency>
 
 
     </dependencies>

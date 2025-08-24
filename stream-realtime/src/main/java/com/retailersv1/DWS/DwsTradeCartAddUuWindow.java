@@ -2,8 +2,9 @@ package com.retailersv1.DWS;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.retailersv1.comment.CartAddUuBean;
 
+
+import com.stream.common.bean.CartAddUuBean;
 import com.stream.common.utils.*;
 import com.stream.common.utils.DorisUtils;
 import lombok.SneakyThrows;
@@ -148,13 +149,16 @@ public class DwsTradeCartAddUuWindow {
 
         //TODO 7.将聚合的结果写到Doris
         aggregateDS.print();
-        aggregateDS
-                .map(new BeanToJsonStrMapFunction<CartAddUuBean>())
-                .sinkTo(DorisUtils.getDorisSink("dws_trade_cart_add_uu_window"));
+//        aggregateDS
+//                .map(new BeanToJsonStrMapFunction<CartAddUuBean>())
+//                .sinkTo(DorisUtils.getDorisSink("dws_trade_cart_add_uu_window"));
 
         env.execute();
 
     }
+
+
+
 }
 
 

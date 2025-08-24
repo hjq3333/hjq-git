@@ -14,7 +14,7 @@ public class DbusDwdTradeOrderPaySucDetail {
 
     private static final String DWD_TRADE_ORDER_DETAIL = ConfigUtils.getString("kafka.dwd.trade.order.detail");
 
-    private static final String DWD_TRADE_ORDER_PAY_SUC_DETAIL = ConfigUtils.getString("kafka.dwd.trade.order.pay.auc.detail");
+    private static final String DWD_TRADE_ORDER_PAY_SUC_DETAIL = ConfigUtils.getString("kafka.dwd.trade.refund.pay.suc.detail");
 
     public static void main(String[] args) {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -43,11 +43,12 @@ public class DbusDwdTradeOrderPaySucDetail {
                         "split_activity_amount string," +
                         "split_coupon_amount string," +
                         "split_total_amount string," +
-                        "ts bigint," +
-                        "et as to_timestamp_ltz(ts, 3), " +
+                        "ts_ms bigint," +
+                        "et as to_timestamp_ltz(ts_ms, 3), " +
                         "watermark for et as et - interval '5' second " +
                         ")" + SqlUtil.getKafka(DWD_TRADE_ORDER_DETAIL,"first"));
 
+        //tEnv.executeSql("select * from dwd_trade_order_detail").print();
 
 
         // 2. 读取统一源表（替代原readOdsDb方法）
@@ -62,7 +63,7 @@ public class DbusDwdTradeOrderPaySucDetail {
                 "  watermark for et as et - interval '5' second \n" +
                 ")" + SqlUtil.getKafka(ODS_KAFKA_TOPIC, "payment_info_consumer_group"));
 
-
+        //tEnv.executeSql("select * from ods_ecommerce_data").print();
 
         // 3. 读取HBase字典表（按指定格式）
         tEnv.executeSql("CREATE TABLE base_dic (\n" +
@@ -79,12 +80,14 @@ public class DbusDwdTradeOrderPaySucDetail {
                 "MD5(CAST(`after`['payment_type'] AS STRING)) payment_type," +
                 "`after`['callback_time'] callback_time," +
                 "proc_time as pt," +
-                "ts_ms as ts," +
+                "ts_ms ," +
                 "et " +
                 "from ods_ecommerce_data " +
                 "where `source`['table']='payment_info' " +
                 "and `after`['payment_status']='1602'");
         tEnv.createTemporaryView("payment_info", paymentInfo);
+
+        //paymentInfo.execute().print();
 
 
 
@@ -108,7 +111,7 @@ public class DbusDwdTradeOrderPaySucDetail {
                         "od.split_activity_amount," +
                         "od.split_coupon_amount," +
                         "od.split_total_amount split_payment_amount," +
-                        "pi.ts " +
+                        "pi.ts_ms " +
                         "from payment_info pi " +
                         "join dwd_trade_order_detail od " +
                         "on pi.order_id=od.order_id " +
@@ -117,6 +120,8 @@ public class DbusDwdTradeOrderPaySucDetail {
                         "join base_dic for system_time as of pi.pt as dic " +
                         "on pi.payment_type=dic.dic_code ");
 
+
+        //result.execute().print();
 
 
         // 6. 写出到Kafka目标表
@@ -138,7 +143,7 @@ public class DbusDwdTradeOrderPaySucDetail {
                 "split_activity_amount string," +
                 "split_coupon_amount string," +
                 "split_payment_amount string," +
-                "ts bigint," +
+                "ts_ms bigint," +
                 "primary key(order_detail_id) not enforced\n" +
                 ")" + SqlUtil.getUpsertKafkaDDL(DWD_TRADE_ORDER_PAY_SUC_DETAIL));
 
